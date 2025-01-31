@@ -10,7 +10,7 @@ export const images = {
     youtube: 'https://img.icons8.com/color/96/youtube-play.png',
     google: 'https://img.icons8.com/color/96/google-ads.png',
     email: 'https://img.icons8.com/fluency/96/mail.png',
-    sms: 'https://img.icons8.com/fluency/96/messages-mac.png',
+    sms: 'https://img.icons8.com/fluency/96/sms.png',
   },
   features: {
     analytics: 'https://placehold.co/600x400/00B894/FFFFFF?text=Analytics',
