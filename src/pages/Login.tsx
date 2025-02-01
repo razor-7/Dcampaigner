@@ -6,13 +6,11 @@ import {
   Typography,
   Button,
   Divider,
-  CircularProgress,
-  Alert,
+  Stack,
 } from '@mui/material';
-import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
-import { useAppDispatch, useAppSelector } from '../hooks/useAppDispatch';
+import { GoogleLogin } from '@react-oauth/google';
+import { useAppDispatch } from '../hooks/useAppDispatch';
 import { loginWithGoogle } from '../store/slices/authSlice';
-import { logger } from '../utils/logger';
 
 interface LoginProps {
   onClose: () => void;
@@ -21,110 +19,87 @@ interface LoginProps {
 const Login: React.FC<LoginProps> = ({ onClose }) => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { loading, error } = useAppSelector((state) => state.auth);
 
-  // Simulated Google login response
-  const mockGoogleCredential = {
-    credential: 'mock_credential',
-    user: {
-      id: '123',
-      email: 'demo@example.com',
-      name: 'Demo User',
-      picture: 'https://api.uifaces.co/our-content/donated/xZ4wg2Xj.jpg',
-    },
-    token: 'mock_token_123',
-  };
+  const handleLogin = async (role: 'admin' | 'client') => {
+    // Mock user data based on role
+    const mockCredential = {
+      user: {
+        id: role === 'admin' ? 'admin-123' : 'client-456',
+        email: `${role}@example.com`,
+        name: `${role.charAt(0).toUpperCase() + role.slice(1)} User`,
+        role: role,
+        ...(role === 'client' && { clientId: 1 }), // Add clientId for client role
+      },
+      token: `mock_${role}_token`, // Create a mock token
+    };
 
-  const handleLogin = async () => {
     try {
-      await dispatch(loginWithGoogle(mockGoogleCredential)).unwrap();
+      await dispatch(loginWithGoogle(mockCredential)).unwrap();
       onClose();
-      navigate('/dashboard'); // Always navigate to dashboard after successful login
+      navigate('/dashboard');
     } catch (error) {
-      logger.error('Login failed:', error);
+      console.error('Login failed:', error);
     }
-  };
-
-  const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
-    try {
-      // For development, use mock credentials instead of actual Google response
-      await handleLogin();
-    } catch (error) {
-      logger.error('Google login failed:', error);
-    }
-  };
-
-  const handleGoogleError = () => {
-    logger.error('Google login failed');
   };
 
   return (
-    <Paper
-      sx={{
-        p: 4,
-        width: '100%',
-        maxWidth: 400,
-        margin: 'auto',
-      }}
-    >
-      <Typography variant="h4" gutterBottom>
-        Welcome to DCampaigner
+    <Paper sx={{ p: 4 }}>
+      <Typography variant="h5" gutterBottom align="center">
+        Sign In
       </Typography>
-      <Typography variant="body1" color="textSecondary" sx={{ mb: 4 }}>
-        Sign in to manage your campaigns
-      </Typography>
+      
+      <Box sx={{ mt: 3 }}>
+        <Typography variant="subtitle2" gutterBottom color="text.secondary" align="center">
+          Developer Testing Options
+        </Typography>
+        
+        <Stack spacing={2}>
+          <Button
+            variant="contained"
+            fullWidth
+            onClick={() => handleLogin('admin')}
+            sx={{
+              bgcolor: 'primary.main',
+              color: 'white',
+              py: 1.5,
+              '&:hover': {
+                bgcolor: 'primary.dark',
+              },
+            }}
+          >
+            Sign In as Admin
+          </Button>
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
-
-      <Box sx={{ mb: 3 }}>
-        {loading ? (
-          <CircularProgress />
-        ) : (
-          <>
-            {/* Real Google Login button */}
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={handleGoogleError}
-              theme="outline"
-              size="large"
-              width="100%"
-              useOneTap
-            />
-            {/* Development bypass button */}
-            <Button
-              variant="contained"
-              fullWidth
-              onClick={handleLogin}
-              sx={{
-                mt: 2,
-                bgcolor: '#4285F4',
-                color: 'white',
-                py: 1.5,
-                '&:hover': {
-                  bgcolor: '#3367D6',
-                },
-              }}
-            >
-              Quick Sign In (Dev Mode)
-            </Button>
-          </>
-        )}
+          <Button
+            variant="contained"
+            fullWidth
+            onClick={() => handleLogin('client')}
+            sx={{
+              bgcolor: 'secondary.main',
+              color: 'white',
+              py: 1.5,
+              '&:hover': {
+                bgcolor: 'secondary.dark',
+              },
+            }}
+          >
+            Sign In as Client
+          </Button>
+        </Stack>
       </Box>
 
-      <Divider sx={{ my: 2 }}>OR</Divider>
+      <Divider sx={{ my: 3 }}>OR</Divider>
 
-      <Button
-        variant="outlined"
-        fullWidth
-        onClick={() => navigate('/demo')}
-        disabled={loading}
-      >
-        Try Demo
-      </Button>
+      <GoogleLogin
+        onSuccess={(credentialResponse) => {
+          dispatch(loginWithGoogle(credentialResponse));
+          navigate('/dashboard');
+          onClose();
+        }}
+        onError={() => {
+          console.log('Login Failed');
+        }}
+      />
     </Paper>
   );
 };

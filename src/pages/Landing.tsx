@@ -20,6 +20,16 @@ import {
   Fade,
   Chip,
   Rating,
+  AppBar,
+  Toolbar,
+  Link,
+  Stack,
+  IconButton,
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemText,
 } from '@mui/material';
 import {
   Campaign,
@@ -33,6 +43,10 @@ import {
   Email,
   Sms,
   Google,
+  Copyright,
+  Menu,
+  Phone,
+  LocationOn,
 } from '@mui/icons-material';
 import Login from './Login';
 import { motion } from 'framer-motion';
@@ -42,6 +56,8 @@ import { ImageWithFallback } from '../components/ImageWithFallback';
 import DashboardPreview from '../components/DashboardPreview';
 import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../hooks/useAppDispatch';
+import { Link as ScrollLink } from 'react-scroll';
+import { Link as RouterLink } from 'react-router-dom';
 
 interface PricingTier {
   name: string;
@@ -69,10 +85,29 @@ const MotionContainer = styled(motion.div)({
   height: '100%',
 });
 
+// Add this with other animation variants at the top of the component
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: {
+      duration: 0.5,
+    },
+  },
+};
+
+// Add this common style to all section Boxes
+const sectionStyle = {
+  py: { xs: 8, md: 12 },
+  scrollMarginTop: '80px', // Increased to ensure content is visible
+};
+
 const Landing: React.FC = () => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
   const [visibleSection, setVisibleSection] = useState('');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -187,255 +222,203 @@ const Landing: React.FC = () => {
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.3,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: {
-        duration: 0.5,
-        ease: "easeOut",
-      },
-    },
+        staggerChildren: 0.2
+      }
+    }
   };
 
   const scaleVariants = {
-    hidden: { scale: 0.9, opacity: 0 },
+    hidden: { scale: 0.8, opacity: 0 },
     visible: {
       scale: 1,
       opacity: 1,
       transition: {
-        duration: 0.5,
-        ease: "easeOut",
-      },
-    },
+        duration: 0.5
+      }
+    }
   };
 
-  // Update testimonials section with motion components
-  const renderTestimonials = () => (
-    <Box
-      component="section"
-      id="testimonials"
-      sx={{
-        py: { xs: 8, md: 12 },
-        bgcolor: 'background.default',
-      }}
-    >
-      <MotionContainer
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.3 }}
-        variants={containerVariants}
-      >
-        <Container maxWidth="lg">
-          <Typography
-            variant="h2"
-            align="center"
-            gutterBottom
-            sx={{ mb: 6 }}
-          >
-            What Our Clients Say
-          </Typography>
-          <Grid container spacing={4}>
-            {testimonials.map((testimonial, index) => (
-              <Grid item xs={12} md={4} key={index}>
-                <motion.div
-                  variants={itemVariants}
-                  whileHover={{ y: -8, transition: { duration: 0.2 } }}
-                >
-                  <Card sx={{ height: '100%' }}>
-                    <CardContent>
-                      <Box sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-                        <Avatar
-                          src={testimonial.avatar}
-                          sx={{ width: 56, height: 56, mr: 2 }}
-                        />
-                        <Box>
-                          <Typography variant="h6">{testimonial.name}</Typography>
-                          <Typography variant="subtitle2" color="text.secondary">
-                            {testimonial.role} at {testimonial.company}
-                          </Typography>
-                        </Box>
-                      </Box>
-                      <Rating value={testimonial.rating} readOnly sx={{ mb: 2 }} />
-                      <Typography variant="body1" color="text.secondary">
-                        "{testimonial.comment}"
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              </Grid>
-            ))}
-          </Grid>
-        </Container>
-      </MotionContainer>
-    </Box>
-  );
-
-  // Update FAQ section with motion components
-  const renderFAQ = () => (
-    <Box
-      component="section"
-      id="faq"
-      sx={{
-        py: { xs: 8, md: 12 },
-        bgcolor: 'background.paper',
-      }}
-    >
-      <MotionContainer
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.3 }}
-        variants={containerVariants}
-      >
-        <Container maxWidth="md">
-          <Typography
-            variant="h2"
-            align="center"
-            gutterBottom
-            sx={{ mb: 6 }}
-          >
-            Frequently Asked Questions
-          </Typography>
-          {faqs.map((faq, index) => (
-            <motion.div
-              key={index}
-              variants={itemVariants}
-              custom={index}
-              style={{ marginBottom: 16 }}
-            >
-              <Accordion>
-                <AccordionSummary 
-                  expandIcon={<ExpandMore />}
-                  sx={{
-                    '&:hover': {
-                      bgcolor: 'rgba(0, 0, 0, 0.03)',
-                    },
-                  }}
-                >
-                  <Typography variant="h6">{faq.question}</Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <Typography>{faq.answer}</Typography>
-                </AccordionDetails>
-              </Accordion>
-            </motion.div>
-          ))}
-        </Container>
-      </MotionContainer>
-    </Box>
-  );
-
-  // Update hero section with image
+  // Hero Section
   const renderHero = () => (
     <Box
       component="section"
       id="hero"
       sx={{
-        background: 'linear-gradient(135deg, #2D3436 0%, #636E72 100%)',
-        color: 'white',
         minHeight: '100vh',
+        pt: { xs: 8, md: 12 },
+        pb: { xs: 6, md: 8 },
         display: 'flex',
         alignItems: 'center',
-        position: 'relative',
-        overflow: 'hidden',
       }}
     >
-      <MotionContainer
-        initial="hidden"
-        animate="visible"
-        variants={containerVariants}
-      >
-        <Container maxWidth="lg">
-          <Grid container spacing={4} alignItems="center">
-            <Grid item xs={12} md={6}>
-              <AnimatedBox variants={itemVariants}>
-                <Typography
-                  variant="h1"
-                  gutterBottom
-                  sx={{
-                    fontWeight: 800,
-                    fontSize: { xs: '2.5rem', md: '4rem' },
-                    marginBottom: 2,
-                    background: 'linear-gradient(135deg, #FFFFFF 0%, #55EFC4 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                  }}
-                >
-                  Transform Your Marketing
-                </Typography>
-                <Typography
-                  variant="h5"
-                  sx={{ mb: 4, opacity: 0.9 }}
-                >
-                  One platform to manage all your marketing campaigns across social media, email, and SMS.
-                </Typography>
-                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                  <Button
-                    variant="contained"
-                    color="secondary"
-                    size="large"
-                    onClick={() => setIsLoginOpen(true)}
-                    sx={{ py: 1.5, px: 4 }}
-                  >
-                    Get Started Free
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    color="inherit"
-                    size="large"
-                    sx={{ py: 1.5, px: 4 }}
-                    href="#features"
-                  >
-                    Learn More
-                  </Button>
-                </Box>
-              </AnimatedBox>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <AnimatedBox
-                variants={scaleVariants}
+      <Container maxWidth="lg">
+        <Grid container spacing={4} alignItems="center">
+          <Grid item xs={12} md={6}>
+            <AnimatedBox
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <Typography
+                variant="h2"
                 sx={{
-                  position: 'relative',
-                  transformStyle: 'preserve-3d',
-                  perspective: 1000,
+                  fontWeight: 800,
+                  mb: 2,
+                  background: 'linear-gradient(45deg, #2D3436 30%, #636E72 90%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
                 }}
               >
-                <Box
-                  sx={{
-                    position: 'relative',
-                    transform: 'rotateY(-10deg) rotateX(5deg)',
-                    transition: 'transform 0.3s ease',
-                    '&:hover': {
-                      transform: 'rotateY(0deg) rotateX(0deg)',
-                    },
-                  }}
+                Manage All Your Marketing Campaigns in One Place
+              </Typography>
+              <Typography
+                variant="h5"
+                sx={{ mb: 4, opacity: 0.9 }}
+              >
+                One platform to manage all your marketing campaigns across social media, email, and SMS.
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  size="large"
+                  onClick={() => setIsLoginOpen(true)}
+                  sx={{ py: 1.5, px: 4 }}
                 >
-                  <DashboardPreview />
-                  {/* Decorative elements */}
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      top: -20,
-                      right: -20,
-                      bottom: 20,
-                      left: 20,
-                      background: 'linear-gradient(135deg, #00B894 0%, #55EFC4 100%)',
-                      borderRadius: '24px',
-                      zIndex: -1,
-                    }}
-                  />
-                </Box>
-              </AnimatedBox>
-            </Grid>
+                  Get Started Free
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="inherit"
+                  size="large"
+                  sx={{ py: 1.5, px: 4 }}
+                  href="#features"
+                >
+                  Learn More
+                </Button>
+              </Box>
+            </AnimatedBox>
           </Grid>
-        </Container>
-      </MotionContainer>
+          <Grid item xs={12} md={6}>
+            <AnimatedBox variants={scaleVariants}>
+              <DashboardPreview />
+            </AnimatedBox>
+          </Grid>
+        </Grid>
+      </Container>
+    </Box>
+  );
+
+  // Features Section
+  const renderFeatures = () => (
+    <Box
+      component="section"
+      id="features"
+      sx={{
+        ...sectionStyle,
+        bgcolor: 'background.paper',
+      }}
+    >
+      <Container maxWidth="lg">
+        <Typography variant="h3" align="center" gutterBottom>
+          Powerful Features
+        </Typography>
+        <Grid container spacing={4} sx={{ mt: 4 }}>
+          {[
+            {
+              icon: <Campaign sx={{ fontSize: 40 }} />,
+              title: 'Multi-Platform Integration',
+              description: 'Connect and manage all your marketing platforms in one dashboard.'
+            },
+            {
+              icon: <Analytics sx={{ fontSize: 40 }} />,
+              title: 'Advanced Analytics',
+              description: 'Get detailed insights and performance metrics for all your campaigns.'
+            },
+            {
+              icon: <Group sx={{ fontSize: 40 }} />,
+              title: 'Team Collaboration',
+              description: 'Work seamlessly with your team members and clients.'
+            }
+          ].map((feature, index) => (
+            <Grid item xs={12} md={4} key={index}>
+              <Paper
+                sx={{
+                  p: 3,
+                  height: '100%',
+                  textAlign: 'center',
+                  transition: 'transform 0.3s ease-in-out',
+                  '&:hover': {
+                    transform: 'translateY(-8px)',
+                  },
+                }}
+              >
+                {feature.icon}
+                <Typography variant="h5" sx={{ my: 2 }}>
+                  {feature.title}
+                </Typography>
+                <Typography color="text.secondary">
+                  {feature.description}
+                </Typography>
+              </Paper>
+            </Grid>
+          ))}
+        </Grid>
+      </Container>
+    </Box>
+  );
+
+  // FAQ Section
+  const renderFAQ = () => (
+    <Box
+      component="section"
+      id="faq"
+      sx={{
+        ...sectionStyle,
+        bgcolor: 'background.default',
+      }}
+    >
+      <Container maxWidth="md">
+        <Typography variant="h3" align="center" gutterBottom>
+          Frequently Asked Questions
+        </Typography>
+        <Box sx={{ mt: 4 }}>
+          {faqs.map((faq, index) => (
+            <Accordion 
+              key={index}
+              sx={{
+                mb: 2,
+                borderRadius: '8px !important',
+                '&:before': { display: 'none' },
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                '&:hover': {
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                },
+                transition: 'all 0.3s ease',
+              }}
+            >
+              <AccordionSummary
+                expandIcon={<ExpandMore />}
+                sx={{
+                  '& .MuiAccordionSummary-content': {
+                    display: 'flex',
+                    alignItems: 'center',
+                  },
+                }}
+              >
+                <Typography variant="h6" sx={{ color: 'primary.main' }}>
+                  {faq.question}
+                </Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Typography color="text.secondary">
+                  {faq.answer}
+                </Typography>
+              </AccordionDetails>
+            </Accordion>
+          ))}
+        </Box>
+      </Container>
     </Box>
   );
 
@@ -448,206 +431,455 @@ const Landing: React.FC = () => {
     { name: 'SMS', image: images.platforms.sms },
   ];
 
+  // Add header section
+  const renderHeader = () => (
+    <AppBar 
+      position="fixed" 
+      color="transparent" 
+      elevation={0}
+      sx={{
+        background: 'rgba(255, 255, 255, 0.9)',
+        backdropFilter: 'blur(8px)',
+        borderBottom: '1px solid',
+        borderColor: 'divider',
+      }}
+    >
+      <Container maxWidth="lg">
+        <Toolbar 
+          sx={{ 
+            justifyContent: 'space-between',
+            px: { xs: 1, sm: 2 },
+            py: 1,
+          }}
+        >
+          <Typography
+            variant="h5"
+            component={RouterLink}
+            to="/"
+            sx={{
+              textDecoration: 'none',
+              color: 'primary.main',
+              fontWeight: 800,
+              letterSpacing: '-0.5px',
+              '&:hover': {
+                color: 'primary.dark',
+              },
+            }}
+          >
+            DCampaigner
+          </Typography>
+
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Stack 
+              direction="row" 
+              spacing={3} 
+              sx={{ 
+                display: { xs: 'none', md: 'flex' },
+                alignItems: 'center',
+              }}
+            >
+              {['About Us', 'Choose Your Plan', 'Contact Us'].map((item) => (
+                <Button
+                  key={item}
+                  color="inherit"
+                  onClick={() => {
+                    const targetId = item.toLowerCase().replace(/\s+/g, '');
+                    const element = document.getElementById(targetId);
+                    element?.scrollIntoView({ 
+                      behavior: 'smooth',
+                      block: 'start'
+                    });
+                  }}
+                  sx={{ 
+                    textTransform: 'none',
+                    color: 'text.primary',
+                    fontWeight: 500,
+                    fontSize: '1rem',
+                    '&:hover': {
+                      color: 'primary.main',
+                      background: 'transparent',
+                    },
+                  }}
+                >
+                  {item}
+                </Button>
+              ))}
+            </Stack>
+
+            <Button
+              variant="contained"
+              onClick={() => setIsLoginOpen(true)}
+              sx={{
+                display: { xs: 'none', md: 'flex' },
+                borderRadius: '50px',
+                px: 3,
+                py: 1,
+                textTransform: 'none',
+                fontSize: '1rem',
+                fontWeight: 600,
+                background: (theme) => `linear-gradient(45deg, ${theme.palette.primary.main} 30%, ${theme.palette.primary.light} 90%)`,
+                boxShadow: '0 3px 10px rgba(0,0,0,0.2)',
+                '&:hover': {
+                  background: (theme) => `linear-gradient(45deg, ${theme.palette.primary.dark} 30%, ${theme.palette.primary.main} 90%)`,
+                  boxShadow: '0 5px 15px rgba(0,0,0,0.3)',
+                  transform: 'translateY(-1px)',
+                },
+                transition: 'all 0.2s ease-in-out',
+              }}
+            >
+              Sign In
+            </Button>
+
+            <IconButton
+              sx={{ 
+                display: { xs: 'flex', md: 'none' },
+                color: 'primary.main',
+              }}
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              <Menu />
+            </IconButton>
+          </Box>
+        </Toolbar>
+      </Container>
+    </AppBar>
+  );
+
+  // Add footer section
+  const renderFooter = () => (
+    <Box
+      component="footer"
+      sx={{
+        bgcolor: 'background.paper',
+        py: 6,
+        px: 2,
+        mt: 'auto',
+      }}
+    >
+      <Container maxWidth="lg">
+        <Grid container spacing={4}>
+          <Grid item xs={12} md={4}>
+            <Typography variant="h6" color="primary" gutterBottom>
+              DCampaigner
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Transform your digital marketing with our comprehensive campaign management platform.
+            </Typography>
+          </Grid>
+          <Grid item xs={12} md={2}>
+            <Typography variant="h6" gutterBottom>
+              Quick Links
+            </Typography>
+            <Stack spacing={1}>
+              {['About Us', 'Features', 'Choose Your Plan', 'Contact Us'].map((item) => (
+                <Button
+                  key={item}
+                  color="inherit"
+                  onClick={() => {
+                    const targetId = item.toLowerCase().replace(/\s+/g, '');
+                    const element = document.getElementById(targetId);
+                    element?.scrollIntoView({ 
+                      behavior: 'smooth',
+                      block: 'start'
+                    });
+                  }}
+                  sx={{ 
+                    justifyContent: 'flex-start',
+                    textTransform: 'none',
+                    padding: 0
+                  }}
+                >
+                  {item}
+                </Button>
+              ))}
+            </Stack>
+          </Grid>
+          <Grid item xs={12} md={3}>
+            <Typography variant="h6" gutterBottom>
+              Legal
+            </Typography>
+            <Stack spacing={1}>
+              <Link component={RouterLink} to="/privacy" color="inherit">Privacy Policy</Link>
+              <Link component={RouterLink} to="/terms" color="inherit">Terms of Service</Link>
+              <Link component={RouterLink} to="/cookies" color="inherit">Cookie Policy</Link>
+            </Stack>
+          </Grid>
+          <Grid item xs={12} md={3}>
+            <Typography variant="h6" gutterBottom>
+              Contact Us
+            </Typography>
+            <Typography variant="body2" paragraph>
+              Email: support@dcampaigner.com
+            </Typography>
+            <Typography variant="body2" paragraph>
+              Phone: +1 (555) 123-4567
+            </Typography>
+          </Grid>
+        </Grid>
+        <Box sx={{ mt: 5, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+          <Typography variant="body2" color="text.secondary" align="center">
+            <Copyright sx={{ mr: 1, fontSize: 'inherit' }} />
+            {new Date().getFullYear()} DCampaigner. All rights reserved.
+          </Typography>
+        </Box>
+      </Container>
+    </Box>
+  );
+
+  // Add this new section renderer before the return statement
+  const renderTestimonials = () => (
+    <Box
+      component="section"
+      id="testimonials"
+      sx={{
+        ...sectionStyle,
+        bgcolor: 'background.paper',
+      }}
+    >
+      <Container maxWidth="lg">
+        <Typography variant="h3" align="center" gutterBottom>
+          What Our Clients Say
+        </Typography>
+        <Grid container spacing={4} sx={{ mt: 4 }}>
+          {testimonials.map((testimonial, index) => (
+            <Grid item xs={12} md={4} key={index}>
+              <motion.div
+                variants={itemVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+              >
+                <Card sx={{ height: '100%' }}>
+                  <CardContent>
+                    <Box sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                      <Avatar
+                        src={testimonial.avatar}
+                        sx={{ width: 56, height: 56, mr: 2 }}
+                      />
+                      <Box>
+                        <Typography variant="h6">{testimonial.name}</Typography>
+                        <Typography variant="subtitle2" color="text.secondary">
+                          {testimonial.role} at {testimonial.company}
+                        </Typography>
+                      </Box>
+                    </Box>
+                    <Rating value={testimonial.rating} readOnly sx={{ mb: 2 }} />
+                    <Typography variant="body1" color="text.secondary">
+                      "{testimonial.comment}"
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </Grid>
+          ))}
+        </Grid>
+      </Container>
+    </Box>
+  );
+
+  // About Us section
+  const renderAbout = () => (
+    <Box
+      component="section"
+      id="aboutus"
+      sx={{
+        ...sectionStyle,
+        bgcolor: 'background.default',
+      }}
+    >
+      <Container maxWidth="lg">
+        <Typography variant="h3" align="center" gutterBottom>
+          About Us
+        </Typography>
+        <Grid container spacing={4} alignItems="center">
+          <Grid item xs={12} md={6}>
+            <Typography variant="h5" gutterBottom>
+              Your Digital Marketing Partner
+            </Typography>
+            <Typography paragraph>
+              DCampaigner is a comprehensive digital marketing platform designed to help businesses 
+              streamline their marketing efforts across multiple channels.
+            </Typography>
+            <Typography paragraph>
+              Our mission is to simplify campaign management while maximizing your marketing ROI 
+              through advanced analytics and automation.
+            </Typography>
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <Box
+              component="img"
+              src={images.features.analytics}
+              alt="About DCampaigner"
+              sx={{
+                width: '100%',
+                borderRadius: 2,
+                boxShadow: 3,
+              }}
+            />
+          </Grid>
+        </Grid>
+      </Container>
+    </Box>
+  );
+
+  // Plans section
+  const renderPlans = () => (
+    <Box
+      component="section"
+      id="chooseyourplan"
+      sx={{
+        ...sectionStyle,
+        bgcolor: 'background.paper',
+      }}
+    >
+      <Container maxWidth="lg">
+        <Typography variant="h3" align="center" gutterBottom>
+          Choose Your Plan
+        </Typography>
+        <Grid container spacing={4} sx={{ mt: 4 }}>
+          {pricingTiers.map((tier, index) => (
+            <Grid item xs={12} md={4} key={index}>
+              <motion.div
+                variants={itemVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+              >
+                <Paper
+                  elevation={tier.recommended ? 8 : 1}
+                  sx={{
+                    p: 3,
+                    position: 'relative',
+                    height: '100%',
+                    borderRadius: 2,
+                    transition: 'transform 0.2s',
+                    '&:hover': {
+                      transform: 'translateY(-8px)',
+                    },
+                  }}
+                >
+                  {tier.recommended && (
+                    <Chip
+                      label="Recommended"
+                      color="primary"
+                      sx={{
+                        position: 'absolute',
+                        top: -16,
+                        right: 24,
+                      }}
+                    />
+                  )}
+                  <Typography variant="h4" component="h3" gutterBottom>
+                    {tier.name}
+                  </Typography>
+                  <Typography variant="h3" component="div" sx={{ mb: 3 }}>
+                    ${tier.price}
+                    <Typography variant="subtitle1" component="span" color="text.secondary">
+                      /month
+                    </Typography>
+                  </Typography>
+                  <Box sx={{ mb: 3 }}>
+                    {tier.features.map((feature, featureIndex) => (
+                      <Box
+                        key={featureIndex}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          mb: 1,
+                        }}
+                      >
+                        <CheckCircle sx={{ mr: 1, color: 'success.main' }} fontSize="small" />
+                        <Typography>{feature}</Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                  <Button
+                    variant={tier.recommended ? 'contained' : 'outlined'}
+                    color="primary"
+                    fullWidth
+                    size="large"
+                    onClick={() => setIsLoginOpen(true)}
+                  >
+                    Get Started
+                  </Button>
+                </Paper>
+              </motion.div>
+            </Grid>
+          ))}
+        </Grid>
+      </Container>
+    </Box>
+  );
+
+  // Contact section
+  const renderContact = () => (
+    <Box
+      component="section"
+      id="contactus"
+      sx={{
+        ...sectionStyle,
+        bgcolor: 'background.default',
+      }}
+    >
+      <Container maxWidth="md">
+        <Typography variant="h3" align="center" gutterBottom>
+          Contact Us
+        </Typography>
+        <Typography variant="h6" align="center" color="text.secondary" paragraph>
+          Have questions? We're here to help!
+        </Typography>
+        <Grid container spacing={4} sx={{ mt: 4 }}>
+          <Grid item xs={12} md={4}>
+            <Box textAlign="center">
+              <Email sx={{ fontSize: 40, color: 'primary.main', mb: 2 }} />
+              <Typography variant="h6" gutterBottom>
+                Email
+              </Typography>
+              <Typography color="text.secondary">
+                support@dcampaigner.com
+              </Typography>
+            </Box>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Box textAlign="center">
+              <Phone sx={{ fontSize: 40, color: 'primary.main', mb: 2 }} />
+              <Typography variant="h6" gutterBottom>
+                Phone
+              </Typography>
+              <Typography color="text.secondary">
+                +1 (555) 123-4567
+              </Typography>
+            </Box>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Box textAlign="center">
+              <LocationOn sx={{ fontSize: 40, color: 'primary.main', mb: 2 }} />
+              <Typography variant="h6" gutterBottom>
+                Office
+              </Typography>
+              <Typography color="text.secondary">
+                123 Marketing Street
+                <br />
+                San Francisco, CA 94105
+              </Typography>
+            </Box>
+          </Grid>
+        </Grid>
+      </Container>
+    </Box>
+  );
+
   return (
     <Box>
+      {renderHeader()}
       {renderHero()}
-      {/* Platform Integration Section with improved animations */}
-      <Box
-        component="section"
-        id="platforms"
-        sx={{
-          py: { xs: 8, md: 12 },
-          bgcolor: 'background.default',
-        }}
-      >
-        <MotionContainer
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.3 }}
-          variants={containerVariants}
-        >
-          <Container maxWidth="lg">
-            <Typography
-              variant="h2"
-              align="center"
-              gutterBottom
-              sx={{ mb: 6 }}
-            >
-              All Your Platforms in One Place
-            </Typography>
-            <Grid container spacing={3} justifyContent="center">
-              {platforms.map((platform, index) => (
-                <Grid item xs={6} sm={4} md={2} key={index}>
-                  <motion.div
-                    variants={itemVariants}
-                    whileHover={{
-                      scale: 1.05,
-                      transition: { duration: 0.2 },
-                    }}
-                  >
-                    <Paper
-                      elevation={3}
-                      sx={{
-                        p: 3,
-                        textAlign: 'center',
-                        transition: 'all 0.3s ease',
-                        '&:hover': {
-                          transform: 'translateY(-8px)',
-                          boxShadow: (theme) => theme.shadows[8],
-                        },
-                      }}
-                    >
-                      <Box
-                        component="img"
-                        src={platform.image}
-                        alt={platform.name}
-                        sx={{
-                          width: 48,
-                          height: 48,
-                          mb: 1,
-                          color: 'primary.main',
-                        }}
-                      />
-                      <Typography variant="subtitle1">
-                        {platform.name}
-                      </Typography>
-                    </Paper>
-                  </motion.div>
-                </Grid>
-              ))}
-            </Grid>
-          </Container>
-        </MotionContainer>
-      </Box>
-
-      {/* Pricing Section with hover animations */}
-      <Box
-        component="section"
-        id="pricing"
-        sx={{
-          py: { xs: 8, md: 12 },
-          bgcolor: 'background.paper',
-        }}
-      >
-        <MotionContainer
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.3 }}
-          variants={containerVariants}
-        >
-          <Container maxWidth="lg">
-            <Typography
-              variant="h2"
-              align="center"
-              gutterBottom
-              sx={{ mb: 6 }}
-            >
-              Simple, Transparent Pricing
-            </Typography>
-            <Grid container spacing={4} justifyContent="center">
-              {pricingTiers.map((tier, index) => (
-                <Grid item xs={12} sm={6} md={4} key={index}>
-                  <motion.div
-                    variants={itemVariants}
-                    whileHover={{
-                      scale: 1.03,
-                      transition: { duration: 0.2 },
-                    }}
-                  >
-                    <Paper
-                      elevation={tier.recommended ? 8 : 2}
-                      sx={{
-                        p: 4,
-                        position: 'relative',
-                        border: tier.recommended ? `2px solid ${theme.palette.primary.main}` : 'none',
-                        height: '100%',
-                      }}
-                    >
-                      {tier.recommended && (
-                        <Chip
-                          label="Recommended"
-                          color="primary"
-                          sx={{
-                            position: 'absolute',
-                            top: -16,
-                            right: 24,
-                          }}
-                        />
-                      )}
-                      <Typography variant="h4" component="h3" gutterBottom>
-                        {tier.name}
-                      </Typography>
-                      <Typography variant="h3" component="div" sx={{ mb: 3 }}>
-                        ${tier.price}
-                        <Typography variant="subtitle1" component="span" color="text.secondary">
-                          /month
-                        </Typography>
-                      </Typography>
-                      <Box sx={{ mb: 3 }}>
-                        {tier.features.map((feature, featureIndex) => (
-                          <Box
-                            key={featureIndex}
-                            sx={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              mb: 1,
-                            }}
-                          >
-                            <CheckCircle sx={{ mr: 1, color: 'success.main' }} fontSize="small" />
-                            <Typography>{feature}</Typography>
-                          </Box>
-                        ))}
-                      </Box>
-                      <Button
-                        variant={tier.recommended ? 'contained' : 'outlined'}
-                        color="primary"
-                        fullWidth
-                        size="large"
-                        onClick={() => setIsLoginOpen(true)}
-                      >
-                        Get Started
-                      </Button>
-                    </Paper>
-                  </motion.div>
-                </Grid>
-              ))}
-            </Grid>
-          </Container>
-        </MotionContainer>
-      </Box>
-
+      {renderAbout()}
+      {renderFeatures()}
+      {renderPlans()}
       {renderTestimonials()}
       {renderFAQ()}
-
-      {/* CTA Section */}
-      <Box
-        component="section"
-        id="cta"
-        sx={{
-          py: { xs: 8, md: 12 },
-          bgcolor: 'primary.main',
-          color: 'white',
-          textAlign: 'center',
-        }}
-      >
-        <Container maxWidth="md">
-          <Typography variant="h3" gutterBottom>
-            Ready to Transform Your Marketing?
-          </Typography>
-          <Typography variant="h6" sx={{ mb: 4, opacity: 0.9 }}>
-            Join thousands of successful businesses using DCampaigner
-          </Typography>
-          <Button
-            variant="contained"
-            color="secondary"
-            size="large"
-            onClick={() => setIsLoginOpen(true)}
-            sx={{ py: 2, px: 6 }}
-          >
-            Start Your Free Trial
-          </Button>
-        </Container>
-      </Box>
+      {renderContact()}
+      {renderFooter()}
 
       {/* Login Dialog */}
       <Dialog

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -22,6 +22,7 @@ import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/ico
 import { useParams, useNavigate } from 'react-router-dom';
 import { Campaign, Client } from '../types';
 import PlatformIntegration from '../components/platforms/PlatformIntegration';
+import { useAppSelector } from '../hooks/useAppDispatch';
 
 // Sample clients data
 const sampleClients: Client[] = [
@@ -45,6 +46,7 @@ const sampleClients: Client[] = [
   }
 ];
 
+// Sample data
 const initialCampaigns: Campaign[] = [
   {
     id: 1,
@@ -65,12 +67,12 @@ const initialCampaigns: Campaign[] = [
   {
     id: 2,
     clientId: 1,
-    name: "YouTube Product Launch",
-    platform: "YouTube",
+    name: "Product Launch",
+    platform: "Instagram",
     status: "planned",
-    budget: 10000,
-    reach: 100000,
-    startDate: "2024-07-15",
+    budget: 3000,
+    reach: 0,
+    startDate: "2024-07-01",
     metrics: {
       impressions: 0,
       clicks: 0,
@@ -78,27 +80,13 @@ const initialCampaigns: Campaign[] = [
       spend: 0
     }
   },
-  {
-    id: 3,
-    clientId: 2,
-    name: "Instagram Story Ads",
-    platform: "Instagram",
-    status: "active",
-    budget: 3000,
-    reach: 25000,
-    startDate: "2024-05-20",
-    metrics: {
-      impressions: 30000,
-      clicks: 1200,
-      conversions: 80,
-      spend: 2800
-    }
-  }
+  // Add more sample campaigns as needed
 ];
 
 const Campaigns: React.FC = () => {
   const { clientId } = useParams();
   const navigate = useNavigate();
+  const { user } = useAppSelector((state) => state.auth);
   const [campaigns, setCampaigns] = useState<Campaign[]>(initialCampaigns);
   const [openDialog, setOpenDialog] = useState(false);
   const [newCampaign, setNewCampaign] = useState<Partial<Campaign>>({});
@@ -108,14 +96,27 @@ const Campaigns: React.FC = () => {
     dateRange: 'all'
   });
 
-  // Filter campaigns based on all criteria
-  const filteredCampaigns = campaigns.filter(campaign => {
-    const matchesClient = clientId ? campaign.clientId === parseInt(clientId) : true;
-    const matchesPlatform = filters.platform === 'all' ? true : campaign.platform === filters.platform;
-    const matchesStatus = filters.status === 'all' ? true : campaign.status === filters.status;
-    
-    return matchesClient && matchesPlatform && matchesStatus;
-  });
+  useEffect(() => {
+    let filteredCampaigns = [...initialCampaigns];
+
+    if (user?.role === 'client' && user.clientId) {
+      filteredCampaigns = filteredCampaigns.filter(
+        campaign => campaign.clientId === user.clientId
+      );
+    } else if (clientId) {
+      filteredCampaigns = filteredCampaigns.filter(
+        campaign => campaign.clientId === parseInt(clientId)
+      );
+    }
+
+    filteredCampaigns = filteredCampaigns.filter(campaign => {
+      const matchesPlatform = filters.platform === 'all' ? true : campaign.platform === filters.platform;
+      const matchesStatus = filters.status === 'all' ? true : campaign.status === filters.status;
+      return matchesPlatform && matchesStatus;
+    });
+
+    setCampaigns(filteredCampaigns);
+  }, [user, clientId, filters]);
 
   const handleFilterChange = (filterType: string, value: string) => {
     setFilters(prev => ({
@@ -124,83 +125,12 @@ const Campaigns: React.FC = () => {
     }));
   };
 
-  const renderFilters = () => (
-    <Box sx={{ mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-      <FormControl size="small" sx={{ minWidth: 200 }}>
-        <InputLabel>Client</InputLabel>
-        <Select
-          value={clientId || ''}
-          label="Client"
-          onChange={(e) => {
-            const value = e.target.value;
-            if (value) {
-              navigate(`/campaigns/${value}`);
-            } else {
-              navigate('/campaigns');
-            }
-          }}
-        >
-          <MenuItem value="">All Clients</MenuItem>
-          {sampleClients.map((client) => (
-            <MenuItem key={client.id} value={client.id}>
-              {client.name}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-
-      <FormControl size="small" sx={{ minWidth: 200 }}>
-        <InputLabel>Platform</InputLabel>
-        <Select
-          value={filters.platform}
-          label="Platform"
-          onChange={(e) => handleFilterChange('platform', e.target.value)}
-        >
-          <MenuItem value="all">All Platforms</MenuItem>
-          <MenuItem value="Facebook">Facebook</MenuItem>
-          <MenuItem value="Instagram">Instagram</MenuItem>
-          <MenuItem value="YouTube">YouTube</MenuItem>
-          <MenuItem value="Google Ads">Google Ads</MenuItem>
-        </Select>
-      </FormControl>
-
-      <FormControl size="small" sx={{ minWidth: 200 }}>
-        <InputLabel>Status</InputLabel>
-        <Select
-          value={filters.status}
-          label="Status"
-          onChange={(e) => handleFilterChange('status', e.target.value)}
-        >
-          <MenuItem value="all">All Status</MenuItem>
-          <MenuItem value="active">Active</MenuItem>
-          <MenuItem value="planned">Planned</MenuItem>
-          <MenuItem value="completed">Completed</MenuItem>
-          <MenuItem value="paused">Paused</MenuItem>
-        </Select>
-      </FormControl>
-
-      <Button 
-        size="small"
-        variant="outlined"
-        onClick={() => {
-          setFilters({
-            platform: 'all',
-            status: 'all',
-            dateRange: 'all'
-          });
-          if (clientId) {
-            navigate('/campaigns');
-          }
-        }}
-      >
-        Clear Filters
-      </Button>
-    </Box>
-  );
+  const showClientFilter = user?.role === 'admin';
 
   const handleAddCampaign = () => {
     setNewCampaign({
-      clientId: clientId ? parseInt(clientId) : undefined,
+      clientId: user?.role === 'client' ? user.clientId : 
+                clientId ? parseInt(clientId) : undefined,
       metrics: {
         impressions: 0,
         clicks: 0,
@@ -212,11 +142,10 @@ const Campaigns: React.FC = () => {
   };
 
   const handleSaveCampaign = (platformData: any) => {
-    // Use the clientId from URL params or from the new campaign data
-    const selectedClientId = newCampaign.clientId || (clientId ? Number(clientId) : undefined);
+    const selectedClientId = user?.role === 'client' ? user.clientId :
+                           newCampaign.clientId || (clientId ? parseInt(clientId) : undefined);
     
     if (!selectedClientId) {
-      // Add error handling for missing client
       console.error('No client selected');
       return;
     }
@@ -237,12 +166,12 @@ const Campaigns: React.FC = () => {
           conversions: 0,
           spend: 0
         },
-        ...platformData // Merge platform-specific data
+        ...platformData
       };
 
-      setCampaigns([...campaigns, newCampaignData]);
+      setCampaigns(prevCampaigns => [...prevCampaigns, newCampaignData]);
       setOpenDialog(false);
-      setNewCampaign({}); // Reset form
+      setNewCampaign({});
     }
   };
 
@@ -264,11 +193,83 @@ const Campaigns: React.FC = () => {
         </Button>
       </Box>
 
-      {renderFilters()}
+      <Box sx={{ mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+        {showClientFilter && (
+          <FormControl size="small" sx={{ minWidth: 200 }}>
+            <InputLabel>Client</InputLabel>
+            <Select
+              value={clientId || ''}
+              label="Client"
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value) {
+                  navigate(`/campaigns/${value}`);
+                } else {
+                  navigate('/campaigns');
+                }
+              }}
+            >
+              <MenuItem value="">All Clients</MenuItem>
+              {sampleClients.map((client) => (
+                <MenuItem key={client.id} value={client.id}>
+                  {client.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        )}
+
+        <FormControl size="small" sx={{ minWidth: 200 }}>
+          <InputLabel>Platform</InputLabel>
+          <Select
+            value={filters.platform}
+            label="Platform"
+            onChange={(e) => handleFilterChange('platform', e.target.value)}
+          >
+            <MenuItem value="all">All Platforms</MenuItem>
+            <MenuItem value="Facebook">Facebook</MenuItem>
+            <MenuItem value="Instagram">Instagram</MenuItem>
+            <MenuItem value="YouTube">YouTube</MenuItem>
+            <MenuItem value="Google Ads">Google Ads</MenuItem>
+          </Select>
+        </FormControl>
+
+        <FormControl size="small" sx={{ minWidth: 200 }}>
+          <InputLabel>Status</InputLabel>
+          <Select
+            value={filters.status}
+            label="Status"
+            onChange={(e) => handleFilterChange('status', e.target.value)}
+          >
+            <MenuItem value="all">All Status</MenuItem>
+            <MenuItem value="active">Active</MenuItem>
+            <MenuItem value="planned">Planned</MenuItem>
+            <MenuItem value="completed">Completed</MenuItem>
+            <MenuItem value="paused">Paused</MenuItem>
+          </Select>
+        </FormControl>
+
+        <Button 
+          size="small"
+          variant="outlined"
+          onClick={() => {
+            setFilters({
+              platform: 'all',
+              status: 'all',
+              dateRange: 'all'
+            });
+            if (clientId) {
+              navigate('/campaigns');
+            }
+          }}
+        >
+          Clear Filters
+        </Button>
+      </Box>
 
       <Grid container spacing={3}>
-        {filteredCampaigns.length > 0 ? (
-          filteredCampaigns.map((campaign) => (
+        {campaigns.length > 0 ? (
+          campaigns.map((campaign) => (
             <Grid item xs={12} md={6} lg={4} key={campaign.id}>
               <Card 
                 sx={{ 
@@ -358,7 +359,7 @@ const Campaigns: React.FC = () => {
         <DialogTitle>Create New Campaign</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
-            {!clientId && (
+            {showClientFilter && (
               <FormControl fullWidth required error={!newCampaign.clientId}>
                 <InputLabel>Client</InputLabel>
                 <Select

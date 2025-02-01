@@ -24,6 +24,7 @@ import {
   Business as BusinessIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { useAppSelector } from '../hooks/useAppDispatch';
 
 const drawerWidth = 240;
 const minimizedDrawerWidth = 65;
@@ -38,14 +39,39 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { user } = useAppSelector((state) => state.auth);
 
-  const menuItems = [
-    { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
-    { text: 'Clients', icon: <BusinessIcon />, path: '/clients' },
-    { text: 'Campaigns', icon: <CampaignIcon />, path: '/campaigns' },
-    { text: 'Analytics', icon: <AnalyticsIcon />, path: '/analytics' },
-    { text: 'Performance', icon: <SpeedIcon />, path: '/performance' },
-  ];
+  // Define menu items based on user role
+  const getMenuItems = () => {
+    const baseMenuItems = [
+      { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
+      { text: 'Campaigns', icon: <CampaignIcon />, path: '/campaigns' },
+      { text: 'Analytics', icon: <AnalyticsIcon />, path: '/analytics' },
+      { text: 'Performance', icon: <SpeedIcon />, path: '/performance' },
+    ];
+
+    // Add Clients menu item only for admin users
+    if (user?.role === 'admin') {
+      return [
+        ...baseMenuItems.slice(0, 1), // Dashboard
+        { text: 'Clients', icon: <BusinessIcon />, path: '/clients' },
+        ...baseMenuItems.slice(1), // Rest of the items
+      ];
+    }
+
+    // For client users, modify the Campaigns path to include their clientId
+    return baseMenuItems.map(item => {
+      if (item.text === 'Campaigns' && user?.clientId) {
+        return {
+          ...item,
+          path: `/campaigns/${user.clientId}`,
+        };
+      }
+      return item;
+    });
+  };
+
+  const menuItems = getMenuItems();
 
   const handleDrawerToggle = () => {
     if (isMobile) {
@@ -66,14 +92,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           minHeight: 64,
         }}
       >
-        {!isMinimized && (
+        {(isMobile || !isMinimized) && (
           <Typography variant="h6" noWrap>
-            Marketing Hub
+            {user?.role === 'client' ? 'Client Portal' : 'Marketing Hub'}
           </Typography>
         )}
-        <IconButton onClick={handleDrawerToggle}>
-          {isMinimized ? <ChevronRightIcon /> : <ChevronLeftIcon />}
-        </IconButton>
+        {!isMobile && (
+          <IconButton onClick={handleDrawerToggle}>
+            {isMinimized ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+          </IconButton>
+        )}
       </Box>
       <List>
         {menuItems.map((item) => (
@@ -86,20 +114,20 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             }}
             sx={{
               minHeight: 48,
-              justifyContent: isMinimized ? 'center' : 'initial',
+              justifyContent: isMinimized && !isMobile ? 'center' : 'initial',
               px: 2.5,
             }}
           >
             <ListItemIcon
               sx={{
                 minWidth: 0,
-                mr: isMinimized ? 0 : 2,
+                mr: isMinimized && !isMobile ? 0 : 2,
                 justifyContent: 'center',
               }}
             >
               {item.icon}
             </ListItemIcon>
-            {!isMinimized && <ListItemText primary={item.text} />}
+            {(isMobile || !isMinimized) && <ListItemText primary={item.text} />}
           </ListItem>
         ))}
       </List>

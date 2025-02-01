@@ -2,19 +2,13 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { jwtDecode } from 'jwt-decode';
 import { httpClient } from '../../utils/http';
 import { API_ENDPOINTS } from '../../config/constants';
+import { User } from '../../types';
 
 interface GoogleUser {
   email: string;
   name: string;
   picture: string;
   sub: string;
-}
-
-interface User {
-  id: string;
-  email: string;
-  name: string;
-  picture?: string;
 }
 
 interface AuthState {
@@ -38,12 +32,17 @@ const initialState: AuthState = {
 
 export const loginWithGoogle = createAsyncThunk(
   'auth/loginWithGoogle',
-  async (mockCredential: any) => {
-    // For development, return mock data directly
-    return {
-      user: mockCredential.user,
-      token: mockCredential.token,
-    };
+  async (credentials: { user: User; token: string } | any) => {
+    // For development, if mock credentials are provided, return them directly
+    if (credentials.user && credentials.token) {
+      return {
+        user: credentials.user,
+        token: credentials.token,
+      };
+    }
+
+    // Handle real Google login here when implemented
+    throw new Error('Real Google login not implemented yet');
   }
 );
 
