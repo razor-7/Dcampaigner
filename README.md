@@ -2,6 +2,8 @@
 
 DCampaigner is a comprehensive digital marketing campaign management platform that helps businesses manage and track their marketing campaigns across multiple platforms.
 
+![Landing Page](./screenshots/landing.png)
+
 ## Features
 
 ### Core Features
@@ -9,22 +11,43 @@ DCampaigner is a comprehensive digital marketing campaign management platform th
 - **Role-Based Access Control**: 
   - Admin: Full access to all features and clients
   - Client: Limited access to own campaigns and analytics
-- **Campaign Management**:
-  - Create and manage campaigns
-  - Track campaign performance
-  - Filter and sort campaigns
-  - Real-time analytics
-- **Analytics & Reporting**:
-  - Performance metrics
-  - Campaign insights
-  - ROI tracking
-  - Custom reports
+
+![Dashboard](./screenshots/dashboard.png)
+
+### Campaign Management
+- Create and manage campaigns
+- Track campaign performance
+- Filter and sort campaigns
+- Real-time analytics
+
+![Campaign Management](./screenshots/campaigns.png)
+
+### Analytics & Reporting
+- Performance metrics
+- Campaign insights
+- ROI tracking
+- Custom reports
+
+![Analytics](./screenshots/analytics.png)
+
+### Role-Based Views
+
+#### Admin Dashboard
+Full access to all features including client management
+![Admin View](./screenshots/admin-view.png)
+
+#### Client Dashboard
+Restricted access to own campaigns and analytics
+![Client View](./screenshots/client-view.png)
 
 ### User Interface
 - **Responsive Design**: Works on desktop, tablet, and mobile devices
 - **Intuitive Dashboard**: Easy-to-use interface for both admin and client users
 - **Dark/Light Mode**: Support for different themes
 - **Interactive Charts**: Visual representation of campaign data
+
+![Mobile View](./screenshots/mobile-view.png)
+![Dark Mode](./screenshots/dark-mode.png)
 
 ## Project Structure 
 dcampaigner/
